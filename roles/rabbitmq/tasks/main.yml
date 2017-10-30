@@ -1,0 +1,98 @@
+---
+- name: Temporary disable selinux, if selinux is running
+  command: getenforce 0
+  register: sestatus
+  changed_when: false
+  when: ansible_os_family == "RedHat"
+  tags: rabbitmq
+
+- name: Permanently closed selinux
+  copy: src=selinux.conf dest=/etc/selinux/config owner=root group=root mode=0644
+  when: ansible_os_family == "RedHat"
+  tags: rabbitmq
+
+- name: Add /etc/hosts
+  copy: src=hosts dest=/etc/hosts owner=root group=root mode=0644
+  when: ansible_os_family == "RedHat"
+  tags: rabbitmq
+
+- name: Add /etc/security/limits.conf
+  copy: src=limits.conf dest=/etc/security/limits.conf owner=root group=root mode=0644
+  when: ansible_os_family == "RedHat"
+  tags: rabbitmq
+
+- name: install rabbitmq-server
+  yum: name=rabbitmq-server-3.6.5 state=present #update_cache=yes
+  when: ansible_os_family == "RedHat"
+  tags: rabbitmq   
+
+- name: add /var/lib/rabbitmq/.erlang.cookie
+  copy: src=erlang.cookie dest=/var/lib/rabbitmq/.erlang.cookie owner=rabbitmq group=rabbitmq mode=0400
+  when: ansible_os_family == "RedHat" 
+  tags: rabbitmq
+
+- name: Setting up the rabbitmq-server.service does not boot 
+  service: name=rabbitmq-server enabled=no state=stopped
+  when: ansible_os_family == "RedHat" 
+  tags: rabbitmq
+
+- name: Prepare RABBITMQ cluster shell script
+  template: src={{ item.script1 }} dest=/tmp/{{ item.script2 }} owner=root group=root mode=0755
+  with_items:
+    - { script1: 'rabbitmq_cluster_disc.sh.j2', script2: 'rabbitmq_cluster_disc.sh' }
+    - { script1: 'rabbitmq_cluster_ram.sh.j2', script2: 'rabbitmq_cluster_ram.sh' }
+  when: ansible_os_family == "RedHat" 
+  tags: rabbitmq
+
+- name: Stop the service and restart the service with another method
+  shell: rabbitmqctl stop && sleep 10 && rabbitmq-server -detached && sleep 10
+  when: ansible_os_family == "RedHat" 
+  tags: 
+   - rabbitmq
+   - rabbitmq_disc
+   - rabbitmq_ram
+
+- name: join_cluster , type disc 
+  shell: /tmp/rabbitmq_cluster_disc.sh
+  when: inventory_hostname in groups['rabbitmq_disc'] and inventory_hostname != groups['rabbitmq_disc'][0]
+  tags: 
+    - rabbitmq
+    - rabbitmq_disc
+
+- name: join_cluster , type ram
+  shell: /tmp/rabbitmq_cluster_ram.sh
+  when: inventory_hostname in groups['rabbitmq_ram']
+  tags: 
+    - rabbitmq
+    - rabbitmq_ram
+
+- name: Setting permissions for user "openstack" in vhost "/" 
+  rabbitmq_user: user={{ user }} password={{ password }} vhost='/' 
+    configure_priv='.*' read_priv='.*' write_priv='.*' state=present
+  when: ansible_os_family == "RedHat" and inventory_hostname==groups['rabbitmq_disc'][0]
+  tags: 
+    - rabbitmq
+    - rabbitmq_disc
+    - rabbitmq_ram
+
+- name: Ensure the default vhost contains the HA policy
+  rabbitmq_policy:
+    name: HA
+    pattern: .*
+    tags:
+      ha-mode: all
+  when: ansible_os_family == "RedHat" and inventory_hostname==groups['rabbitmq_disc'][0]
+  tags: 
+    - rabbitmq
+    - rabbitmq_disc
+    - rabbitmq_ram
+
+- name: rabbitmq-plugin
+  rabbitmq_plugin:
+    names: rabbitmq_management
+    state: enabled
+  when: ansible_os_family == "RedHat" and inventory_hostname in groups['rabbitmq']
+  tags: 
+    - rabbitmq
+    - rabbitmq_disc
+    - rabbitmq_ram

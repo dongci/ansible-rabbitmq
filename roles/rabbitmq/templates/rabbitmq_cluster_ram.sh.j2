@@ -1,0 +1,9 @@
+#!/bin/bash
+rabbitmqctl stop_app 
+sleep 5  
+rabbitmqctl reset 
+sleep 5
+rabbitmqctl --ram join_cluster rabbit@{{ cluster_join_node1 }}
+sleep 5 
+rabbitmqctl start_app
+exit

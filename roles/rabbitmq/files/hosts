@@ -1,0 +1,7 @@
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+
+#rabbitmq
+10.0.0.101 rabbit1
+10.0.0.102 rabbit2
+10.0.0.103 rabbit3
