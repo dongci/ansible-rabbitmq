@@ -1,10 +1,10 @@
 English:
 ------------------------------------------------------
-``# ansible-rabbitmq``
+## ansible-rabbitmq ##
 
 Edit the ./inventory/hosts configuration file
 
-`` ``
+###
 [rabbitmq_disc]
 10.0.0.101
 10.0.0.103
@@ -20,7 +20,7 @@ rabbitmq_ram
 user = openstack
 password = 123456
 cluster_join_node1 = rabbit1
-`` ``
+###
 
 1> Install rabbitmq cluster
 ```
