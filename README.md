@@ -1,7 +1,5 @@
-English:
+ansible-rabbitmq:
 ------------------------------------------------------
-** ansible-rabbitmq **
-
 Edit the ./inventory/hosts configuration file
 
 ###
