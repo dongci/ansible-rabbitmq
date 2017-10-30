@@ -1,6 +1,7 @@
 说明：
+```
 1》定义的主机组一定不能改变
-  主机组中可以是IP或者主机名，但不能加其他的变量
+主机组中可以是IP或者主机名，但不能加其他的变量
 
 2》>./inventory/hosts 中的变量
 
@@ -20,5 +21,5 @@ ansible-playbook site.yml --tags rabbitmq
 5》disc和ram重置重新添加
 ansible-playbook site.yml --tags rabbitmq_disc
 ansible-playbook site.yml --tags rabbitmq_ram
-
+```
 
